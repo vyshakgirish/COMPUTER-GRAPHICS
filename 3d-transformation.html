@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Transformation Studio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            padding: 2rem;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #475569;
+            font-size: 1.1rem;
+        }
+
+        .header .tech {
+            color: #0891b2;
+            font-weight: 600;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .viewport {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 2px solid rgba(168, 85, 247, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background: #1e293b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 2px solid rgba(6, 182, 212, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-panel.purple { 
+            border-color: rgba(168, 85, 247, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(243, 232, 255, 0.5) 100%);
+        }
+        .control-panel.pink { 
+            border-color: rgba(236, 72, 153, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(252, 231, 243, 0.5) 100%);
+        }
+        .control-panel.yellow { 
+            border-color: rgba(234, 179, 8, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(254, 249, 195, 0.5) 100%);
+        }
+
+        .control-panel h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1e293b;
+        }
+
+        .control-group {
+            margin-bottom: 0.75rem;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: #475569;
+            margin-bottom: 0.25rem;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            color: #1e293b;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        select:focus {
+            border-color: #0891b2;
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+            background: #fff;
+        }
+
+        input[type="range"] {
+            padding: 0;
+            height: 2.5rem;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            color: #334155;
+        }
+
+        .slider-value {
+            font-size: 0.875rem;
+            color: #475569;
+            margin-top: 0.25rem;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+            border: none;
+            border-radius: 0.75rem;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .info {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 2px solid rgba(203, 213, 225, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .info h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #1e293b;
+        }
+
+        .info p {
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .info strong {
+            color: #0891b2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>3D Transformation Studio</h1>
+            <p>Interactive 3D transformations powered by <span class="tech">Three.js</span></p>
+        </div>
+
+        <div class="grid">
+            <!-- Viewport -->
+            <div class="viewport">
+                <div id="canvas-container"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <!-- Geometry -->
+                <div class="control-panel">
+                    <h2><span>🎨</span> Geometry</h2>
+                    <div class="control-group">
+                        <select id="geometry-select">
+                            <option value="cube">Cube</option>
+                            <option value="sphere">Sphere</option>
+                            <option value="cone">Cone</option>
+                            <option value="torus">Torus</option>
+                            <option value="dodecahedron">Dodecahedron</option>
+                        </select>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="wireframe-toggle">
+                        <label for="wireframe-toggle">Wireframe Mode</label>
+                    </div>
+                </div>
+
+                <!-- Rotation -->
+                <div class="control-panel purple">
+                    <h2><span>🔄</span> Rotation</h2>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="auto-rotate" checked>
+                        <label for="auto-rotate">Auto Rotate</label>
+                    </div>
+                    <div id="manual-rotation" style="display: none; margin-top: 1rem;">
+                        <div class="control-group">
+                            <label>X Axis</label>
+                            <input type="range" id="rotation-x" min="-3.14" max="3.14" step="0.01" value="0">
+                        </div>
+                        <div class="control-group">
+                            <label>Y Axis</label>
+                            <input type="range" id="rotation-y" min="-3.14" max="3.14" step="0.01" value="0">
+                        </div>
+                        <div class="control-group">
+                            <label>Z Axis</label>
+                            <input type="range" id="rotation-z" min="-3.14" max="3.14" step="0.01" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scale -->
+                <div class="control-panel pink">
+                    <h2><span>📏</span> Scale</h2>
+                    <div class="control-group">
+                        <input type="range" id="scale-slider" min="0.5" max="2" step="0.1" value="1">
+                        <div class="slider-value" id="scale-value">1.0x</div>
+                    </div>
+                </div>
+
+                <!-- Position -->
+                <div class="control-panel yellow">
+                    <h2><span>📍</span> Position</h2>
+                    <div class="control-group">
+                        <label>X Position</label>
+                        <input type="range" id="position-x" min="-3" max="3" step="0.1" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label>Y Position</label>
+                        <input type="range" id="position-y" min="-3" max="3" step="0.1" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label>Z Position</label>
+                        <input type="range" id="position-z" min="-3" max="3" step="0.1" value="0">
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <button class="reset-btn" id="reset-btn">Reset Transforms</button>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="info">
+            <h3>About This Project</h3>
+            <p>
+                This interactive 3D transformation studio is built with <strong>Three.js</strong>, 
+                an open-source JavaScript library for creating 3D graphics in the browser using WebGL. 
+                Explore different geometries and apply various transformations including rotation, scaling, and translation. 
+                The scene features dynamic lighting with multiple colored point lights to enhance the 3D effect.
+            </p>
+        </div>
+    </div>
+
+    <!-- Three.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // Global variables
+        let scene, camera, renderer, mesh;
+        let autoRotate = true;
+        let animationId;
+
+        // Initialize the scene
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f0f1e);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(
+                75,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.z = 5;
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const pointLight1 = new THREE.PointLight(0x00ffff, 1, 100);
+            pointLight1.position.set(5, 5, 5);
+            scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0xff00ff, 1, 100);
+            pointLight2.position.set(-5, -5, 5);
+            scene.add(pointLight2);
+
+            const pointLight3 = new THREE.PointLight(0xffff00, 0.8, 100);
+            pointLight3.position.set(0, 5, -5);
+            scene.add(pointLight3);
+
+            // Create initial geometry (cube)
+            createGeometry('cube');
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // Create geometry
+        function createGeometry(type) {
+            // Remove existing mesh
+            if (mesh) {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            }
+
+            let geometry;
+            switch (type) {
+                case 'cube':
+                    geometry = new THREE.BoxGeometry(2, 2, 2);
+                    break;
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(1.5, 32, 32);
+                    break;
+                case 'cone':
+                    geometry = new THREE.ConeGeometry(1.5, 3, 32);
+                    break;
+                case 'torus':
+                    geometry = new THREE.TorusGeometry(1.2, 0.5, 16, 100);
+                    break;
+                case 'dodecahedron':
+                    geometry = new THREE.DodecahedronGeometry(1.5);
+                    break;
+                default:
+                    geometry = new THREE.BoxGeometry(2, 2, 2);
+            }
+
+            const wireframe = document.getElementById('wireframe-toggle').checked;
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x6366f1,
+                shininess: 100,
+                wireframe: wireframe
+            });
+
+            mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+        }
+
+        // Animation loop
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+
+            if (autoRotate && mesh) {
+                mesh.rotation.x += 0.01;
+                mesh.rotation.y += 0.01;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Window resize handler
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Event listeners
+        document.getElementById('geometry-select').addEventListener('change', (e) => {
+            createGeometry(e.target.value);
+        });
+
+        document.getElementById('wireframe-toggle').addEventListener('change', (e) => {
+            if (mesh) {
+                mesh.material.wireframe = e.target.checked;
+            }
+        });
+
+        document.getElementById('auto-rotate').addEventListener('change', (e) => {
+            autoRotate = e.target.checked;
+            document.getElementById('manual-rotation').style.display = autoRotate ? 'none' : 'block';
+        });
+
+        document.getElementById('rotation-x').addEventListener('input', (e) => {
+            if (mesh && !autoRotate) {
+                mesh.rotation.x = parseFloat(e.target.value);
+            }
+        });
+
+        document.getElementById('rotation-y').addEventListener('input', (e) => {
+            if (mesh && !autoRotate) {
+                mesh.rotation.y = parseFloat(e.target.value);
+            }
+        });
+
+        document.getElementById('rotation-z').addEventListener('input', (e) => {
+            if (mesh && !autoRotate) {
+                mesh.rotation.z = parseFloat(e.target.value);
+            }
+        });
+
+        document.getElementById('scale-slider').addEventListener('input', (e) => {
+            const scale = parseFloat(e.target.value);
+            if (mesh) {
+                mesh.scale.set(scale, scale, scale);
+            }
+            document.getElementById('scale-value').textContent = scale.toFixed(1) + 'x';
+        });
+
+        document.getElementById('position-x').addEventListener('input', (e) => {
+            if (mesh) {
+                mesh.position.x = parseFloat(e.target.value);
+            }
+        });
+
+        document.getElementById('position-y').addEventListener('input', (e) => {
+            if (mesh) {
+                mesh.position.y = parseFloat(e.target.value);
+            }
+        });
+
+        document.getElementById('position-z').addEventListener('input', (e) => {
+            if (mesh) {
+                mesh.position.z = parseFloat(e.target.value);
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            // Reset all controls
+            document.getElementById('rotation-x').value = 0;
+            document.getElementById('rotation-y').value = 0;
+            document.getElementById('rotation-z').value = 0;
+            document.getElementById('scale-slider').value = 1;
+            document.getElementById('position-x').value = 0;
+            document.getElementById('position-y').value = 0;
+            document.getElementById('position-z').value = 0;
+            document.getElementById('scale-value').textContent = '1.0x';
+
+            // Reset mesh
+            if (mesh) {
+                mesh.rotation.set(0, 0, 0);
+                mesh.scale.set(1, 1, 1);
+                mesh.position.set(0, 0, 0);
+            }
+        });
+
+        // Start the application
+        init();
+        animate();
+    </script>
+</body>
+</html>
